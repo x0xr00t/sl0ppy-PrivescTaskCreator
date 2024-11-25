@@ -58,10 +58,7 @@ If -File is not provided, the script will prompt you to input the path interacti
     Start the task immediately.
     Provide the process ID (PID) of the running task for verification.
 ```
-# Adjust Timing (Optional): By default, the task starts 2 minutes after execution. Modify this by updating the $startTime logic:
-```
-    $startTime = $currentDateTime.AddMinutes(5)  # Example: Start 5 minutes from now
-```
+
 ## Configuration
 * Key Parameters
 
