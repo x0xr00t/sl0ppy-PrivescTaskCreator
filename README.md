@@ -1,5 +1,7 @@
 ### sl0ppy-privesctaskcreator
 
+## version V2.0
+
 * sl0ppy-privesctaskcreator is a PowerShell-based script that automates the creation of a scheduled task with elevated privileges. Designed for flexibility, this tool allows users to specify a custom PowerShell script to execute under the highest available permissions, making it useful for system administration, testing, or other scenarios requiring privilege escalation.
 
 ## Features
@@ -36,6 +38,14 @@
 ```.\sl0ppy-privesctaskcreator.ps1 -File "C:\Path\To\Your\Script.ps1"```
 
 If -File is not provided, the script will prompt you to input the path interactively.
+
+* Specify a Custom Task Name
+
+```.\TaskEscalation.ps1 -FilePath "C:\path\to\script.ps1" -CustTaskName "CustomTask"```
+
+* Specify a Custom Start Time
+
+```.\TaskEscalation.ps1 -FilePath "C:\path\to\script.ps1" -Time (Get-Date).AddHours(1)```
 
 * Run with Administrator Privileges: Open PowerShell as an administrator to ensure the script has the necessary permissions.
 
