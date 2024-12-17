@@ -57,39 +57,39 @@ Provide the path to a PowerShell script to execute:
 
 ## Flags and Parameters
 
-* -CustTaskName (optional):
+# -CustTaskName (optional):
 
 * Specify a custom name for the scheduled task (default: ElevatedTask).
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "MyCustomTask"```
 
-* -Time (optional):
+# -Time (optional):
 
 * Set a custom start time for the task. If not provided, defaults to 2 minutes from the current time.
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Time (Get-Date).AddHours(1)```
 
-* -RepeatInterval (optional):
+# -RepeatInterval (optional):
 
-Specify a repetition interval in ISO 8601 format (e.g., PT1H for hourly).
+* Specify a repetition interval in ISO 8601 format (e.g., PT1H for hourly).
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RepeatInterval "PT1H"```
 
--RunOnBattery (optional):
+# -RunOnBattery (optional):
 
-Allow the task to run even when the system is on battery power.
+* Allow the task to run even when the system is on battery power.
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunOnBattery```
 
--StartWhenAvailable (optional):
+# -StartWhenAvailable (optional):
 
-Start the task as soon as the system is ready (e.g., after startup).
+* Start the task as soon as the system is ready (e.g., after startup).
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -StartWhenAvailable```
 
-* -Hidden (optional):
+# -Hidden (optional):
 
-Hide the task in the Task Scheduler UI.
+* Hide the task in the Task Scheduler UI.
 
 ```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Hidden```
 
