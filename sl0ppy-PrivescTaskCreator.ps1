@@ -1,11 +1,15 @@
 # Author: phoogeveen aka x0xr00t
-# Description: Enhanced script for creating a scheduled task with custom name, start time, and improved stealth.
-# Version: 2.0
+# Description: Enhanced script for creating a scheduled task with custom options for start time, repeat interval, visibility, and triggers.
+# Version: 3.0
 
 param(
     [string]$FilePath,
     [string]$CustTaskName = "ElevatedTask",  # Default task name if none is provided
-    [datetime]$Time  # Optional start time
+    [datetime]$Time,                          # Optional start time
+    [string]$RepeatInterval = "",            # Optional repeat interval (e.g., "PT1H" for hourly)
+    [switch]$RunOnBattery,                    # Allow the task to run on battery
+    [switch]$StartWhenAvailable,              # Start the task when available
+    [switch]$Hidden                           # Hide the task in the task scheduler
 )
 
 # Check if the FilePath parameter was provided, or prompt the user
@@ -31,7 +35,12 @@ if (-not $Time) {
 $formattedStartTime = $Time.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
 Write-Output "Formatted start time for XML: $formattedStartTime"
 
-# Define the XML for the scheduled task
+# Define additional flags
+$disallowStartIfOnBatteries = if ($RunOnBattery) { "false" } else { "true" }
+$startWhenAvailable = if ($StartWhenAvailable) { "true" } else { "false" }
+$hiddenTask = if ($Hidden) { "true" } else { "false" }
+
+# Build the XML for the scheduled task
 $taskXml = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -45,6 +54,18 @@ $taskXml = @"
       <StartBoundary>$formattedStartTime</StartBoundary>
       <Enabled>true</Enabled>
     </TimeTrigger>
+@"
+
+if ($RepeatInterval) {
+    $taskXml += @"  
+    <Repetition>
+      <Interval>$RepeatInterval</Interval>
+      <StopAtDurationEnd>false</StopAtDurationEnd>
+    </Repetition>
+"@
+}
+
+$taskXml += @"  
   </Triggers>
   <Principals>
     <Principal id="Author">
@@ -54,10 +75,10 @@ $taskXml = @"
   </Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <DisallowStartIfOnBatteries>$disallowStartIfOnBatteries</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>$disallowStartIfOnBatteries</StopIfGoingOnBatteries>
     <AllowHardTerminate>true</AllowHardTerminate>
-    <StartWhenAvailable>false</StartWhenAvailable>
+    <StartWhenAvailable>$startWhenAvailable</StartWhenAvailable>
     <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
     <IdleSettings>
       <StopOnIdleEnd>true</StopOnIdleEnd>
@@ -65,7 +86,7 @@ $taskXml = @"
     </IdleSettings>
     <AllowStartOnDemand>true</AllowStartOnDemand>
     <Enabled>true</Enabled>
-    <Hidden>true</Hidden>
+    <Hidden>$hiddenTask</Hidden>
     <RunOnlyIfIdle>false</RunOnlyIfIdle>
     <WakeToRun>false</WakeToRun>
     <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
