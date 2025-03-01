@@ -57,57 +57,81 @@ The script is ready to run.
 
 Provide the path to a PowerShell script to execute:
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Path\To\Your\Script.ps1"```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Path\To\Your\Script.ps1"```
 
 * If -FilePath is not provided, the script will prompt you to input the path interactively.
 
 ## Flags and Parameters
 
-# -CustTaskName (optional):
+### -CustTaskName (optional):
 
 * Specify a custom name for the scheduled task (default: ElevatedTask).
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "MyCustomTask"```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "MyCustomTask"```
 
-# -Time (optional):
+### -Time (optional):
 
 * Set a custom start time for the task. If not provided, defaults to 2 minutes from the current time.
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Time (Get-Date).AddHours(1)```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Time (Get-Date).AddHours(1)```
 
-# -RepeatInterval (optional):
+### -RepeatInterval (optional):
 
 * Specify a repetition interval in ISO 8601 format (e.g., PT1H for hourly).
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RepeatInterval "PT1H"```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RepeatInterval "PT1H"```
 
-# -RunOnBattery (optional):
+### -RunOnBattery (optional):
 
 * Allow the task to run even when the system is on battery power.
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunOnBattery```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunOnBattery```
 
-# -StartWhenAvailable (optional):
+### -StartWhenAvailable (optional):
 
 * Start the task as soon as the system is ready (e.g., after startup).
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -StartWhenAvailable```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -StartWhenAvailable```
 
-# -Hidden (optional):
+### -Hidden (optional):
 
 * Hide the task in the Task Scheduler UI.
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Hidden```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Hidden```
+
+### -WakeToRun (optional):
+
+* Wake the computer to run the scheduled task.
+
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -WakeToRun```
+
+### -NetworkRequired (optional):
+
+* Run the task only when a network connection is available.
+
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -NetworkRequired```
+
+### -RunAsUser (optional):
+
+* Specify a custom user account to run the task.
+
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunAsUser "DOMAIN\User"```
+
+### -ExecutionTimeLimit (optional):
+
+* Set a maximum duration for the task execution.
+
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -ExecutionTimeLimit "PT30M"```
 
 ## Advanced Examples
 
-* Run a Script Immediately
+### Run a Script Immediately
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\TestScript.ps1" -Time (Get-Date)```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\TestScript.ps1" -Time (Get-Date)```
 
 ## Full Customization Example
 
-```.‌sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "DailyTask" -Time (Get-Date).AddMinutes(10) -RepeatInterval "P1D" -RunOnBattery -StartWhenAvailable -Hidden```
+```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "DailyTask" -Time (Get-Date).AddMinutes(10) -RepeatInterval "P1D" -RunOnBattery -StartWhenAvailable -Hidden -WakeToRun -NetworkRequired -RunAsUser "DOMAIN\User" -ExecutionTimeLimit "PT30M"```
 
 ## Configuration
 ```
