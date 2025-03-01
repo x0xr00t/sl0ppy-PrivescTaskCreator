@@ -2,17 +2,19 @@
 
 ```sl0ppy-privesctaskcreator is a PowerShell-based script that automates the creation of a scheduled task with elevated privileges. Designed for flexibility, this tool allows users to specify a custom PowerShell script to execute under the highest available permissions, making it useful for system administration, testing, or other scenarios requiring privilege escalation.```
 
-# Version: V3.0
+# Version: V4.0
 ```
-* Improvements in V3.0:
+* Improvements in V3.1:
 
 * Added -CustTaskName flag for customizable task naming.
-
 * Added -Time flag to specify the start time.
-
 * Added -RepeatInterval for periodic task execution.
-
 * Introduced -RunOnBattery, -StartWhenAvailable, and -Hidden flags for enhanced control.
+* Added -WakeToRun flag to wake the computer for execution.
+* Introduced -NetworkRequired flag to run only if a network connection is available.
+* Added -RunAsUser option to specify a custom user for execution.
+* Enhanced -MultipleInstancePolicy for better task management.
+* Included -ExecutionTimeLimit to set a max duration for task execution.
 ```
 ## Features
 ```
@@ -20,9 +22,13 @@
    * Automated Scheduling: Schedules a task to run with elevated privileges, automatically starting at a calculated future time.
    * Hidden and Elevated Task: The task runs hidden from user interfaces and with the highest privileges available.
    * Repetition Support: Option to configure the task to repeat at custom intervals.
+   * Wake and Network Control: Options to wake the system for execution and enforce network dependency.
+   * User Customization: Ability to specify a custom user account for execution.
+   * Enhanced Task Handling: Supports multiple instance policies and execution time limits.
    * Error Handling: Includes robust checks for task registration, execution, and process validation to ensure smooth operation.
    * Interactive or Scripted Use: Prompts for a file path if none is specified, making it versatile for different usage scenarios.
 ```
+
 
 ## Prerequisites
 ```
