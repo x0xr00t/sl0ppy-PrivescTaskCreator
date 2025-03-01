@@ -1,6 +1,6 @@
 # Author: phoogeveen aka x0xr00t
 # Description: Enhanced script for creating a scheduled task with advanced customization options.
-# Version: 4.0
+# Version: 3.1
 
 param(
     [string]$FilePath,
