@@ -179,9 +179,3 @@ Hidden execution
 Network/ wake controls
 ```
 
-🎯 Why OmniTask?
-EDR Evasion✅ 12+ techniques❌ NoneExecution Methods✅ 12+ vectors❌ 1 (PowerShell)Persistence✅ 5+ methods❌ NoneProcess Injection✅ Hollowing, PPID spoofing❌ NoneNetwork Evasion✅ DNS, Proxy, Tor❌ NoneAnti-Forensics✅ ADS, log clearing❌ NoneCustomization✅ 50+ flags❌ 10 flags
-
-OmniTask – The ultimate tool for red teamers, penetration testers, and security researchers.
-Bypass modern EDRs (CrowdStrike, SentinelOne, Defender ATP) with ease. 🚀
-
