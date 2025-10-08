@@ -66,8 +66,8 @@ A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled 
 
 ## 🚀 Installation
 ```
-* git clone https://github.com/x0xr00t/sl0ppy-PriveSCTaskCreator.git
-* cd PriveSCTaskCreator
+* git clone https://github.com/x0xr00t/sl0ppy-PrivescTaskCreator.git
+* cd PrivescTaskCreator
 * The script is now ready to run.
 ```
 📖 Usage
