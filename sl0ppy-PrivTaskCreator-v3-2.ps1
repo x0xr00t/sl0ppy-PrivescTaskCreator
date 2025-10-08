@@ -7,7 +7,7 @@
 .AUTHOR
     phoogeveen aka x0xr00t
 .VERSION
-    6.0 "OmniTask"
+    3.2 "PrivEscTaskCreator"
 .NOTES
     For authorized red team engagements only.
     Tested against: CrowdStrike, SentinelOne, Defender ATP, Carbon Black, Elastic Endpoint
