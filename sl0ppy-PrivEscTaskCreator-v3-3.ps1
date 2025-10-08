@@ -1,20 +1,24 @@
 <#
 .SYNOPSIS
     sl0ppy-PrivescTaskCreator - Advanced Scheduled Task Creator with 9/10 Evasion Success
+
 .DESCRIPTION
     Creates highly evasive scheduled tasks with multi-layered defense bypasses,
     process injection, and persistence mechanisms. Achieves 90%+ evasion against
     modern EDR/XDR solutions through direct syscalls, memory execution, and
     comprehensive API unhooking.
+
 .AUTHOR
     phoogeveen aka x0xr00t
+
 .VERSION
     3.3 "PrivEscTaskCreator"
-    
+
+.NOTES
     Tested Against: CrowdStrike, SentinelOne, Defender ATP, Carbon Black, Elastic Endpoint
     Evasion Success Rate: 92% in controlled testing (Oct 2025)
 
-    .Features:
+.FEATURES
     - Direct syscall implementation for all critical operations
     - Memory-only execution with reflective loading
     - Advanced parent process spoofing
@@ -25,7 +29,7 @@
     - Network evasion techniques
     - Self-defense mechanisms
 
-    .Usage: 
+.EXAMPLE
     .\sl0ppy-PrivescTaskCreator.ps1 -FilePath payload.exe [options]
 #>
 
