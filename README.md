@@ -1,11 +1,10 @@
-## sl0ppy-privesctaskcreator
-A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled tasks with advanced persistence and execution options.
-
-## Stats 
 ![GitHub release](https://img.shields.io/github/v/release/x0xr00t/sl0ppy-PrivescTaskCreator)
 ![GitHub license](https://img.shields.io/github/license/x0xr00t/sl0ppy-PrivescTaskCreator)
 ![GitHub stars](https://img.shields.io/github/stars/x0xr00t/sl0ppy-PrivescTaskCreator)
 ![GitHub issues](https://img.shields.io/github/issues/x0xr00t/sl0ppy-PrivescTaskCreator)
+
+## sl0ppy-privesctaskcreator
+A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled tasks with advanced persistence and execution options.
 
 ## 🔥 Key Improvements in v3.2
 ```
