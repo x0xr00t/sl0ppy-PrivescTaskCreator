@@ -407,10 +407,51 @@ public static void PatchETW()
     if ($BlockETWProviders) {
         try {
             $providers = @(
-                "{c6227b22-2a45-4c5e-b7b0-834a7969be5a}", # Microsoft-Windows-Threat-Intel
-                "{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e756}", # Microsoft-Windows-Sysmon
-                "{5eec96ef-0542-486a-beb9-36b31808d3bf}", # Microsoft-Windows-PowerShell
-                "{e13c0d23-ccd9-44d9-a4b8-91941f5d914e}"  # Microsoft-Windows-TaskScheduler
+                 # =========================================================================
+                 # 1. CORE PROCESS, MEMORY & KERNEL MONITORING (EDR / AV Deep Visibility)
+                 # =========================================================================
+                 "{c6227b22-2a45-4c5e-b7b0-834a7969be5a}", # Microsoft-Windows-Threat-Intel (Kernel-level logging voor API unhooking, process hollowing en injecties)
+                 "{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e756}", # Microsoft-Windows-Sysmon (System Monitor - de industriestandaard voor telemetry op endpoints)
+                 "{7021ca0e-6e42-4f71-af3d-24de97bb9740}", # Microsoft-Windows-Kernel-Process (Creatie/terminatie van processen en threads, token manipulatie)
+                 "{3b2505c0-035d-4f19-95e3-ca2d4b971a7d}", # Microsoft-Windows-Kernel-Memory (VirtualAlloc/Protect aanroepen - cruciaal tegen in-memory shellcode)
+                 "{22df775d-b03d-4f19-b5a0-d12423984d72}", # Microsoft-Windows-Kernel-File (Directe I/O-monitoring, detectie van vroege ransomware-encryptie)
+
+                 # =========================================================================
+                 # 2. RUNTIMES, SCRIPTING & LOTL (Living off the Land)
+                 # =========================================================================
+                 "{5eec96ef-0542-486a-beb9-36b31808d3bf}", # Microsoft-Windows-PowerShell (Scriptblokken, AMSI-events en deep execution logs)
+                 "{a3a14e9e-ea55-4cc7-ab78-c11be28e20f1}", # Microsoft-Windows-WMI-Activity (WMI-events, persistence via event consumers en remote WMI)
+                 "{e13b77a8-14b6-11de-8069-001b212b5009}", # .NET Runtime (Detecteert inline C# execution via tools zoals 'execute-assembly')
+                 "{066ec280-4658-33ee-a9ad-4a1d132de245}", # Microsoft-Windows-AppLocker (Toepassingsblokkades en WDAC/AppLocker bypasses)
+                 "{1432a187-df0e-47cd-aeaa-6d75971a7ef0}", # Microsoft-Windows-Script-BlockLogging (Generieke script-execution monitoring voor VBA/VBScript/JScript)
+
+                 # =========================================================================
+                 # 3. IDENTITY, CREDENTIAL PROTECTION & ACCESS CONTROL
+                 # =========================================================================
+                 "{5484bef1-09f7-44db-84fc-6b0ccdb224aa}", # Microsoft-Windows-Security-Mitigation (Exploit Guard, ACG, ASLR-fouten en LSASS-beveiliging)
+                 "{7b563579-ad3e-46cf-ab17-380d394bb54c}", # Microsoft-Windows-LDAP-Client (Active Directory enumeration via BloodHound, Sharphound of ADExplorer)
+                 "{cbdac66e-c6e3-4b4b-9b16-87ae6e85fc8c}", # Microsoft-Windows-Winlogon (UAC-bypasses, malafide logon-notifiers en credential providers)
+                 "{a0e71f49-56d1-4171-807e-75f8502f6ed1}", # Microsoft-Windows-NTLM (Zwakke authenticatie, NTLM relaying en pass-the-hash detectie)
+                 "{9e334674-e142-4551-b5f5-21d37e0e75a9}", # Microsoft-Windows-Kerberos (TGS/TGT requests, detectie van Kerberoasting en Golden/Silver Ticket-aanvallen)
+
+                 # =========================================================================
+                 # 4. NETWORK PROTOCOLS & LATERAL MOVEMENT
+                 # =========================================================================
+                 "{6ad52b32-d609-4be9-ae07-c58e5d793868}", # Microsoft-Windows-RPC (Remote Procedure Calls - misbruikt door Impacket, Cobalt Strike en dcom-lateral movement)
+                 "{cca274a2-ed02-4012-a74a-1fe231db0a46}", # Microsoft-Windows-COM (DCOM/COM hijacking en deserialization exploits)
+                 "{dd2de402-d922-4a0b-9c3f-c1f932ca4d8a}", # Microsoft-Windows-DNS-Client (DNS-query logging voor C2-beacons en DNS-data-exfiltratie)
+                 "{839174ea-585c-4da4-9cb6-993d939fc9b4}", # Microsoft-Windows-SmbServer (SMB-misbruik zoals PetitPotam, EternalBlue en lateral movement via psexec)
+                 "{7dd42a49-532f-4832-8dfd-43d979153a88}", # Microsoft-Windows-WinINet (HTTP/HTTPS-verkeer gegenereerd door native Windows-applicaties)
+
+                 # =========================================================================
+                 # 5. VIRTUALIZATION, PERSISTENCE & SYSTEM CHANGE
+                 # =========================================================================
+                 "{d1d93efd-ee32-4dbb-9310-745a73853def}", # Microsoft-Windows-Subsystem-Linux (WSL2-omgeving monitoring, cross-OS malware)
+                 "{e13c0d23-ccd9-44d9-a4b8-91941f5d914e}", # Microsoft-Windows-TaskScheduler (Geplande taken voor persistence of privilege escalation)
+                 "{01375d33-bcda-411a-8b1b-1fb1aa612f86}", # Microsoft-Windows-Containers-Winiov (Windows Sandboxes en container-ontsnappingen)
+                 "{43d1a55c-76d6-4fcd-9964-e95e3b51a317}", # Microsoft-Windows-Services (Creatie en wijziging van Windows Services - favoriete persistence methode)
+                 "{7021ca0e-6e42-4f71-af3d-24de97bb974c}"  # Microsoft-Windows-Kernel-Registry (Directe monitoring van registry wijzigingen zoals Run-keys)
+
             )
             foreach ($provider in $providers) {
                 reg add "HKLM\SYSTEM\CurrentControlSet\Control\WMI\Autologger\$provider" /v Start /t REG_DWORD /d 0 /f | Out-Null
