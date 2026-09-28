@@ -223,19 +223,52 @@ using System.Runtime.InteropServices;
 
 public class SyscallStub
 {
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
     public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
     public static extern IntPtr LoadLibrary(string lpLibFileName);
 
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern IntPtr GetModuleHandle(string lpModuleName);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool FreeLibrary(IntPtr hModule);
+
+    // Jouw originele basismethode
     public static IntPtr GetSyscallStub(string module, string function)
     {
         IntPtr hModule = LoadLibrary(module);
         return GetProcAddress(hModule, function);
     }
+
+    // Uitbreiding 1: Zoekt een functie zonder de DLL opnieuw te laden als deze al actief is
+    public static IntPtr GetLoadedSyscallStub(string module, string function)
+    {
+        IntPtr hModule = GetModuleHandle(module);
+        if (hModule == IntPtr.Zero)
+        {
+            hModule = LoadLibrary(module);
+        }
+        return GetProcAddress(hModule, function);
+    }
+
+    // Uitbreiding 2: Laadt een module, haalt het adres op, en ruimt de module daarna netjes op
+    public static IntPtr GetSyscallStubWithCleanup(string module, string function, out bool success)
+    {
+        IntPtr hModule = LoadLibrary(module);
+        if (hModule == IntPtr.Zero)
+        {
+            success = false;
+            return IntPtr.Zero;
+        }
+        IntPtr funcAddress = GetProcAddress(hModule, function);
+        success = FreeLibrary(hModule);
+        return funcAddress;
+    }
 }
 "@
+
 
         $type = Add-Type -TypeDefinition $asm -PassThru
         return $type::GetSyscallStub($Module, $Function)
