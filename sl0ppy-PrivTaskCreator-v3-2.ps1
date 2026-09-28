@@ -164,15 +164,37 @@ function Invoke-ReflectivePEInjection {
     )
     try {
         $winFunc = @'
-[DllImport("kernel32.dll")]
+[DllImport("kernel32.dll", SetLastError = true)]
 public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
 
-[DllImport("kernel32.dll")]
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool VirtualProtect(IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool VirtualFree(IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
+[DllImport("kernel32.dll", SetLastError = true)]
 public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
 
-[DllImport("kernel32.dll")]
-public static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out uint lpNumberOfBytesWritten);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool CloseHandle(IntPtr hObject);
 '@
+
 
         $type = Add-Type -MemberDefinition $winFunc -Name "Win32" -Namespace Win32Functions -PassThru
 
