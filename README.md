@@ -901,6 +901,9 @@ Pull requests are welcome! Feel free to:
 * Advanced persistence (WMI, services, etc.)
 * Process injection (hollowing, PPID spoofing)
 * Network evasion (DNS, proxy, Tor)
+* Analysis & Runtime Integrity  {$debugCheck}
+* Memory & Thread Orchestration {$winFunc}
+* Dynamic Function Resolution  {$asm}
 ```
 
 ## v3.1 (Legacy)
