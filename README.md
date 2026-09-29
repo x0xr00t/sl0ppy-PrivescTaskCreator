@@ -20,6 +20,10 @@
 * ✅ Backward Compatibility
 * ✅ All original v3.1 features preserved
 * ✅ Same core scheduling logic with enhanced reliability
+  ## new and or upgraded 
+  ✅ Dynamic Function Resolution  {$asm}
+  ✅Memory & Thread Orchestration {$winFunc}
+  ✅Analysis & Runtime Integrity  {$debugCheck}
 ```
 
 # 🛠 Features
