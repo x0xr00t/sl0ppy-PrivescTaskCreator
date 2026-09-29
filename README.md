@@ -3,8 +3,8 @@
 ![GitHub stars](https://img.shields.io/github/stars/x0xr00t/sl0ppy-PrivescTaskCreator)
 ![GitHub issues](https://img.shields.io/github/issues/x0xr00t/sl0ppy-PrivescTaskCreator)
 
-## sl0ppy-privesctaskcreator
-A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled tasks with advanced persistence and execution options.
+# sl0ppy-privesctaskcreator
+## A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled tasks with advanced persistence and execution options.
 
 ## 🔥 Key Improvements in v3.2
 ```
@@ -22,8 +22,8 @@ A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled 
 * ✅ Same core scheduling logic with enhanced reliability
 ```
 
-## 🛠 Features
-# 🔧 Core Functionality
+# 🛠 Features
+## 🔧 Core Functionality
 ```
 * Dynamic Script Execution – Run any .ps1 script with elevated privileges
 * Automated Scheduling – Precise timing control with jitter for evasion
@@ -61,7 +61,7 @@ A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled 
 * Base64Encodes PowerShell commandsXORSimple byte XOR encryptionRC4Stream cipher encryptionAESStrong symmetric encryptionSecureStringHides commands in memory
 ```
 
-## 📋 Prerequisites
+# 📋 Prerequisites
 ```
 * Windows OS (7/10/11, Server 2012+)
 * Administrator Privileges (for task creation)
@@ -69,7 +69,7 @@ A PowerShell-based tool for creating highly customizable, EDR-evasive scheduled 
 * Target Script (.ps1 file must exist at the specified path)
 ```
 
-## 🚀 Installation
+# 🚀 Installation
 ```
 * git clone https://github.com/x0xr00t/sl0ppy-PrivescTaskCreator.git
 * cd PrivescTaskCreator
